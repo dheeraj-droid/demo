@@ -1,5 +1,13 @@
 import puppeteer from 'puppeteer';
-import { DEFAULT_COORDS, HEADLESS, SCRAPE_TIMEOUT } from './config.js';
+import {
+  DEFAULT_COORDS,
+  HEADLESS,
+  SCRAPE_TIMEOUT,
+  PUPPETEER_EXECUTABLE_PATH,
+  PROXY_SERVER,
+  PROXY_USERNAME,
+  PROXY_PASSWORD,
+} from './config.js';
 
 /**
  * Headless-browser price scraper. Drives a real Chromium instance against the
@@ -19,6 +27,8 @@ const LAUNCH_ARGS = [
   '--no-first-run',
   '--no-zygote',
   '--window-size=1280,900',
+  // Route the scraper through a residential proxy when configured (VPS path).
+  ...(PROXY_SERVER ? [`--proxy-server=${PROXY_SERVER}`] : []),
 ];
 
 // A realistic desktop UA reduces trivial headless-bot flags.
@@ -34,6 +44,7 @@ export function getBrowser() {
     browserPromise = puppeteer.launch({
       headless: HEADLESS ? 'new' : false,
       args: LAUNCH_ARGS,
+      executablePath: PUPPETEER_EXECUTABLE_PATH, // undefined → puppeteer's own Chromium
     });
   }
   return browserPromise;
@@ -53,6 +64,11 @@ async function preparePage(browser, origin) {
   await page.setUserAgent(USER_AGENT);
   await page.setViewport({ width: 1280, height: 900 });
   page.setDefaultNavigationTimeout(SCRAPE_TIMEOUT);
+
+  // Authenticate to the residential proxy if credentials are configured.
+  if (PROXY_SERVER && PROXY_USERNAME) {
+    await page.authenticate({ username: PROXY_USERNAME, password: PROXY_PASSWORD });
+  }
 
   // Grant + override geolocation so the site skips the "select location" wall
   // and loads the catalog for our configured dark store.

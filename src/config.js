@@ -21,6 +21,18 @@ export const DEFAULT_COORDS = {
 export const HEADLESS = process.env.HEADLESS !== 'false';
 export const SCRAPE_TIMEOUT = Number(process.env.SCRAPE_TIMEOUT) || 20000;
 
+// Optional path to a system Chromium. Set in Docker (PUPPETEER_EXECUTABLE_PATH)
+// so we reuse the apt-installed browser instead of downloading a second copy.
+export const PUPPETEER_EXECUTABLE_PATH =
+  process.env.PUPPETEER_EXECUTABLE_PATH?.trim() || undefined;
+
+// Optional residential proxy for the SCRAPER ONLY (not WhatsApp traffic).
+// Required on datacenter/VPS IPs where Blinkit/Zepto block requests.
+//   PROXY_SERVER=http://host:port   (+ PROXY_USERNAME / PROXY_PASSWORD if authed)
+export const PROXY_SERVER = process.env.PROXY_SERVER?.trim() || '';
+export const PROXY_USERNAME = process.env.PROXY_USERNAME?.trim() || '';
+export const PROXY_PASSWORD = process.env.PROXY_PASSWORD?.trim() || '';
+
 /**
  * Per-platform scraping config.
  *  - searchUrl(q): live search page for a query.

@@ -5,6 +5,7 @@ import { parseMessage } from './aiParser.js';
 import { comparePrices } from './priceEngine.js';
 import { formatComparison } from './formatter.js';
 import { closeBrowser } from './scraper.js';
+import { PUPPETEER_EXECUTABLE_PATH } from './config.js';
 
 const { Client, LocalAuth } = pkg;
 
@@ -12,6 +13,7 @@ const client = new Client({
   authStrategy: new LocalAuth(),
   puppeteer: {
     headless: true,
+    executablePath: PUPPETEER_EXECUTABLE_PATH, // undefined → bundled Chromium
     // Optimized for low-resource / containerized environments.
     args: [
       '--no-sandbox',
