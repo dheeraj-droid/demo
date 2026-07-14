@@ -1,0 +1,33 @@
+{
+  "name": "whatsapp-amazon-price-tracker",
+  "version": "1.0.0",
+  "description": "WhatsApp bot that tracks Amazon product prices and DMs you when they drop below your target.",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "smoke": "node scripts/smoke.js",
+    "scrape:check": "node scripts/scrapeCheck.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "whatsapp",
+    "amazon",
+    "price-tracker",
+    "price-drop",
+    "puppeteer",
+    "scraper",
+    "bot"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "node-cron": "^3.0.3",
+    "puppeteer": "^23.0.0",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.26.0"
+  }
+}

@@ -1,0 +1,21 @@
+services:
+  qc-bot:
+    build: .
+    image: whatsapp-qc-price-optimizer
+    container_name: qc-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    # QR code prints to logs on first run: `docker compose logs -f qc-bot`
+    tty: true
+    volumes:
+      # Persist the WhatsApp session so you only scan the QR once.
+      - wwebjs_auth:/app/.wwebjs_auth
+      # Persist tracked products + price history.
+      - tracker_data:/app/data
+    # Chromium can be memory-hungry; give it room + shared memory.
+    shm_size: "1gb"
+
+volumes:
+  wwebjs_auth:
+  tracker_data:

@@ -1,0 +1,14 @@
+node_modules/
+.env
+
+# tracked-products data (created at runtime)
+data/
+
+# whatsapp-web.js session/cache
+.wwebjs_auth/
+.wwebjs_cache/
+
+# logs / os
+npm-debug.log*
+yarn-error.log*
+.DS_Store
