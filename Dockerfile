@@ -27,8 +27,8 @@ RUN npm ci --omit=dev
 
 COPY . .
 
-# Persist the WhatsApp session across restarts (mounted as a volume).
-VOLUME ["/app/.wwebjs_auth"]
+# Persist the WhatsApp session AND tracked-products data across restarts.
+VOLUME ["/app/.wwebjs_auth", "/app/data"]
 
 # dumb-init reaps the zombie processes Chromium leaves behind.
 ENTRYPOINT ["dumb-init", "--"]

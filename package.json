@@ -1,7 +1,7 @@
 {
-  "name": "whatsapp-qc-price-optimizer",
+  "name": "whatsapp-amazon-price-tracker",
   "version": "1.0.0",
-  "description": "WhatsApp bot that compares live Blinkit vs Zepto grocery prices, using Gemini to parse unstructured chat text and a headless browser to scrape real prices.",
+  "description": "WhatsApp bot that tracks Amazon product prices and DMs you when they drop below your target.",
   "type": "module",
   "main": "src/index.js",
   "scripts": {
@@ -15,18 +15,17 @@
   },
   "keywords": [
     "whatsapp",
-    "quick-commerce",
-    "blinkit",
-    "zepto",
-    "gemini",
-    "price-comparison",
+    "amazon",
+    "price-tracker",
+    "price-drop",
     "puppeteer",
-    "scraper"
+    "scraper",
+    "bot"
   ],
   "license": "MIT",
   "dependencies": {
-    "@google/generative-ai": "^0.21.0",
     "dotenv": "^16.4.5",
+    "node-cron": "^3.0.3",
     "puppeteer": "^23.0.0",
     "qrcode-terminal": "^0.12.0",
     "whatsapp-web.js": "^1.26.0"

@@ -11,8 +11,11 @@ services:
     volumes:
       # Persist the WhatsApp session so you only scan the QR once.
       - wwebjs_auth:/app/.wwebjs_auth
+      # Persist tracked products + price history.
+      - tracker_data:/app/data
     # Chromium can be memory-hungry; give it room + shared memory.
     shm_size: "1gb"
 
 volumes:
   wwebjs_auth:
+  tracker_data:

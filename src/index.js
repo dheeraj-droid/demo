@@ -1,11 +1,13 @@
 import pkg from 'whatsapp-web.js';
 import qrcode from 'qrcode-terminal';
 
-import { parseMessage } from './aiParser.js';
-import { comparePrices } from './priceEngine.js';
-import { formatComparison } from './formatter.js';
-import { closeBrowser } from './scraper.js';
+import { parseCommand } from './commands.js';
+import { fetchProduct, extractAsin, canonicalUrl } from './amazonScraper.js';
+import { addTracker, listTrackers, removeTrackerByIndex } from './store.js';
+import { startScheduler } from './scheduler.js';
+import { closeBrowser } from './browser.js';
 import { PUPPETEER_EXECUTABLE_PATH } from './config.js';
+import * as msg from './messages.js';
 
 const { Client, LocalAuth } = pkg;
 
@@ -14,7 +16,6 @@ const client = new Client({
   puppeteer: {
     headless: true,
     executablePath: PUPPETEER_EXECUTABLE_PATH, // undefined → bundled Chromium
-    // Optimized for low-resource / containerized environments.
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -31,12 +32,46 @@ client.on('qr', (qr) => {
   qrcode.generate(qr, { small: true });
 });
 
-client.on('ready', () => console.log('✅ Bot is ready!'));
-client.on('auth_failure', (msg) => console.error('❌ Auth failure:', msg));
-client.on('disconnected', (reason) => console.warn('⚠️  Disconnected:', reason));
+client.on('ready', () => {
+  console.log('✅ Bot is ready!');
+  // Proactively DM the owner when a tracked price drops.
+  startScheduler((owner, text) => client.sendMessage(owner, text));
+});
+
+client.on('auth_failure', (m) => console.error('❌ Auth failure:', m));
+client.on('disconnected', (r) => console.warn('⚠️  Disconnected:', r));
+
+async function handleTrack(message, cmd) {
+  const owner = message.from;
+  await message.reply('🔎 Fetching that product…');
+
+  let product;
+  try {
+    product = await fetchProduct(cmd.url);
+  } catch (err) {
+    console.warn('[track] fetch failed:', err.message);
+    // Still track it (price null) so the scheduler retries later.
+    product = {
+      asin: extractAsin(cmd.url),
+      url: canonicalUrl(cmd.url),
+      title: null,
+      price: null,
+      currency: '₹',
+    };
+  }
+
+  if (!product.asin) {
+    await message.reply(msg.notAProduct());
+    return;
+  }
+
+  const { tracker, existing } = await addTracker({ owner, product, target: cmd.target });
+  const confirm = msg.trackConfirm(tracker, existing);
+  await message.reply(product.price == null ? `${msg.trackFailedNote()}\n\n${confirm}` : confirm);
+}
 
 client.on('message', async (message) => {
-  // Only process direct, individual text chats — skip groups and non-text.
+  // Individual text chats only — skip groups and non-text.
   let chat;
   try {
     chat = await message.getChat();
@@ -50,17 +85,27 @@ client.on('message', async (message) => {
   if (!text) return;
 
   try {
-    const items = await parseMessage(text);
-    await message.reply(`🔎 Checking Blinkit & Zepto for ${items.length} item(s)…`);
-
-    const comparison = await comparePrices(items);
-    await message.reply(formatComparison(comparison, items));
+    const cmd = parseCommand(text);
+    switch (cmd.type) {
+      case 'track':
+        await handleTrack(message, cmd);
+        break;
+      case 'list':
+        await message.reply(msg.listMessage(await listTrackers(message.from)));
+        break;
+      case 'untrack':
+        await message.reply(msg.untrackMessage(await removeTrackerByIndex(message.from, cmd.index)));
+        break;
+      case 'help':
+      case 'unknown':
+      default:
+        await message.reply(msg.helpMessage());
+        break;
+    }
   } catch (err) {
     console.error('[message] error:', err);
     try {
-      await message.reply(
-        '🤖 Sorry, I couldn\'t process that. Send a grocery list like:\n\n_"2 milk, 1 bread, 6 eggs"_'
-      );
+      await message.reply(msg.errorMessage());
     } catch {
       /* ignore secondary send failure */
     }

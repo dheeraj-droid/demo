@@ -1,31 +1,28 @@
 /**
- * Live scrape check — runs the REAL Puppeteer scraper against Blinkit & Zepto
- * for a couple of items and prints what it found. Use this to verify/tune the
- * selectors in src/config.js on a machine with a residential IP.
+ * Live scrape check — fetches ONE Amazon product page for real and prints what
+ * it found. Use this to verify/tune the selectors in src/amazonScraper.js on a
+ * machine with a residential IP.
  *
- *   npm run scrape:check
- *   HEADLESS=false npm run scrape:check   # watch the browser
+ *   npm run scrape:check "https://www.amazon.in/dp/B0CHX1W1XY"
+ *   HEADLESS=false npm run scrape:check "<url>"   # watch the browser
  *
- * Note: datacenter IPs are routinely bot-blocked, so items may show as
- * "unavailable" even though the code is correct — test locally.
+ * Note: datacenter IPs often get a robot-check, so this may fail even though the
+ * code is correct — test locally or via a residential PROXY_SERVER.
  */
-import { comparePrices } from '../src/priceEngine.js';
-import { formatComparison } from '../src/formatter.js';
-import { closeBrowser } from '../src/scraper.js';
+import { fetchProduct } from '../src/amazonScraper.js';
+import { closeBrowser } from '../src/browser.js';
 
-const items = [
-  { item_name: 'milk', quantity: 2 },
-  { item_name: 'bread', quantity: 1 },
-];
+const url = process.argv[2] || 'https://www.amazon.in/dp/B0CHX1W1XY';
 
 try {
-  console.log('Scraping live prices for:', items);
-  const result = await comparePrices(items);
-  console.log(JSON.stringify(result.platforms, null, 2));
-  console.log('\n--- WhatsApp reply preview ---\n');
-  console.log(formatComparison(result, items));
+  console.log('Fetching:', url);
+  const product = await fetchProduct(url);
+  console.log(JSON.stringify(product, null, 2));
+  if (product.price == null) {
+    console.log('\n⚠️ No price found — likely a robot-check or a changed layout.');
+  }
 } catch (err) {
-  console.error('Live scrape failed:', err);
+  console.error('Live scrape failed:', err.message);
 } finally {
   await closeBrowser();
 }
